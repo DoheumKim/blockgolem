@@ -1,0 +1,785 @@
+# ver 6.2.1 - 발표
+
+# 추가/수정 부분
+'''
+- Test함수->unit_change, test변수->direc으로 변경
+- R_cal 함수 내용 수정 
+'''
+# 이전 업데이트
+'''
+- 단위변환 도입(메뉴버튼 클릭)
+- oper(연산자) 저장 방식 변경(equal함수에 있음) - line 122
+- 예외처리 도입(try:,except:) [equal,measure함수에 있음]
+
+- 제곱,제곱근 버튼 클릭시 시각적 효과 추가
+'''
+# 고쳐야 할 점
+'''
+- 제곱,제곱근 2회차이상에서의 계산 구현
+- abs버튼 괄호랑 연계 시 오류 수정
+- history를 큐 형식으로 바꾸기 #기각
+- history 삭제 및 복사기능 구현 #기각
+'''
+# 다음패치예정
+'''
+- 단위변환 UI개선
+
+- 숫자입력하면 계산기록창에 바로 뜨게 만들기
+- 제곱,제곱근 복합계산(언젠가)
+'''
+# 다운로드
+'''
+계산기 아이콘: https://docs.google.com/uc?export=download&id=11RQfZJzuZrQiSqysvsHZv_Likq39iuwB
+다크 모드 이미지: https://docs.google.com/uc?export=download&id=1OkDsLoXCgN1EnWjnJTVcWu5AzkQ7rmsj
+라이트 모드 이미지: https://docs.google.com/uc?export=download&id=1_jANswO1GxECz-4FQV1J9fDOVtAcN0qU    
+'''
+
+from sqlite3 import Row
+from 전역변수 import *
+
+# 함수 
+def btn_brk_pressed(value):
+    global brkL,brkR
+    brkL = show.get().count('(')
+    brkR = show.get().count(')')
+
+    if brkL == brkR:
+        if show.get() == '':
+            show.insert(0,'(')
+        else:
+            show.insert(END,'x(')
+    elif brkL != brkR:
+        show.insert(END,')')
+    
+    print (brkL,brkR)
+    
+# if문1
+
+
+
+def btn_num_pressed(value):
+    global oper,zero_to_nine,equalPressed
+    global jegobPressed,jegobNum,jisu,nJegob
+
+    if jegobPressed == True:
+        if nJegob == False:
+            show.insert(show.get().index('√'),jegobNum[int(value)])
+            jisu = str(value)
+            print(jisu)
+        elif nJegob == True:
+            jisu += value  
+            show.insert(END,jegobNum[int(value)])
+            
+    
+    if jegobPressed == False:
+        if value != '=':        
+            show.insert('end',value)
+        print(value)
+
+
+def btn_operator_pressed(value):
+    global oper,equalPressed
+    if jegobPressed == False:
+        if value == '=':
+            equalPressed = True
+            print(f'eq:{equalPressed}')
+        if value != '=':
+            oper += value
+            equalPressed= False
+            print(f'eq:{equalPressed}')      
+            show.insert('end',value)
+    elif jegobPressed == True:
+        pass
+        print(value)
+
+# 함수 1
+
+def equal_btn_pressed(value):
+    global sik_component,dap,run_time,equalPressed,oper,sik_list,express_to_history,operator
+    global mit,jegobPressed,Format,jisu,nJegob,sik,mem_jisu
+    try:
+        if show.get() == '20220525':
+                return easter_eggs('1')
+        run_time += 1
+        history.see(END)  #자동스크롤
+    
+        if jegobPressed == True:  #제곱계산 다른 함수로 옮김
+            if nJegob == True:
+                jegob_cal('jegob')
+
+            else:
+                jegob_cal('bogej')
+
+    
+        if equalPressed == True:
+            if run_time>0:
+                print('r>0')
+                sik = show.get()+sik_component[-1]+sik_component[1]
+                sik = str(sik).replace('÷','/')
+                sik = sik.replace('x','*')
+        
+        elif equalPressed == False:
+            sik = show.get().replace('÷','/')
+            sik = sik.replace('x','*')
+
+            #연산자저장
+            
+            oper = [i for i in operator if i in sik][0]
+            print('IIIIMMMM OPER!',oper,sik)
+            sik_component = sik.split(oper)
+            sik_component += oper
+            print(f'sikComp:{sik_component},sik:{sik},oper:{oper}')
+        
+        print('SikDap',sik,dap)
+        dap = round(eval(sik),8)
+        cash_dap = str(dap).split('.')
+        print(f'cd:{cash_dap}')
+        if len(cash_dap) > 1:
+            print('len cash')
+            if cash_dap[-1][-1] == '0':
+                    dap = cash_dap[0]
+                    print(f'dap:{dap},cash_dap:{cash_dap}')
+            show.delete(0,'end')
+            show.insert('end',dap)
+    
+        elif jegobPressed == False:
+            show.delete(0,'end')
+            show.insert('end', dap)
+            print(sik,dap)
+    
+        return history_act('normal') 
+    except:
+        if jegobPressed == False:
+            show.delete(0,END)
+            show.insert(0,'올바른 숫자를 입력하세요')  
+
+def history_naming(value):
+    global run_time, a_sik,sik,dap
+    if value == 'jegobs':
+        if run_time == 1:
+             a_sik = '1st:'
+        elif run_time == 2:
+            a_sik = '2nd:'
+        elif run_time == 3:
+             a_sik = '3rd:'
+        elif run_time > 3:
+             a_sik = str(run_time)+'th:'
+
+    elif value == 'normal':
+         if run_time == 1:
+             a_sik = ('1st:'+(sik)+' = '+str(dap))
+             sik_list[1] = a_sik
+             print(sik_list)
+         if run_time == 2:
+             a_sik = ('2nd:'+(sik)+' = '+str(dap))
+             sik_list[2] = a_sik
+             print(sik_list)
+         if run_time == 3:
+             a_sik = ('3rd:'+(sik)+' = '+str(dap))
+             sik_list[3] = a_sik
+             print(sik_list)
+         if run_time > 3:
+            a_sik = (str(run_time)+'th:'+(sik)+' = '+str(dap))
+            sik_list[run_time] = a_sik
+            print(sik_list)
+
+# if문2
+def history_act(value):
+    global run_time,a_sik,sik_list,dap,oper,jisu,sik,mit
+
+    if value == 'jegob' or value == 'bogej':
+        history_naming('jegobs')
+
+    if value == 'normal':
+        history_naming('normal')
+        oper,jisu,dap = '','',0
+        express_to_history = str(sik_list[run_time])+'\n'
+        express_to_history = express_to_history.replace('*','x')
+        express_to_history = express_to_history.replace('/','÷')
+        print(express_to_history)
+        history.insert(run_time,express_to_history)
+        
+    elif value == 'jegob':
+        history.insert(run_time,(f'{a_sik}{sik} 답:{dap}'))
+        print(f'it is {sik} : {dap}')        
+        
+    elif value == 'bogej':
+        history.insert(run_time,(f'{a_sik}{sik} 답:{dap}'))
+        print(f'it is {sik} : {dap}') 
+    #mit,jisu = 0,0
+
+
+
+
+
+
+def clear_btn_pressed(value):
+    global mit,jisu,EasterEgg,m1_easter
+    if EasterEgg == '1':
+            win.destroy()
+
+    elif value == 'ac':
+        show.delete(0,END)
+        
+    elif value == 'c':
+        if jegobPressed == True:
+            if nJegob == False:
+                show.delete(show.index(END) - 1)
+                print(mit[:-1])
+                mit = mit[:-1]
+            elif nJegob == True:
+                show.delete(show.index(END) - 1)
+                jisu = jisu[:-1]
+        else:
+            show.delete(show.index(END) - 1)
+        #print(eval(temp_num))
+
+def menu_btn_pressed(value): #후순위(나중에 건드릴 것)
+    global sik_component,oper,menu_pressed,measure_win
+    if value == 'M':
+        if menu_pressed == False:
+            measure_win = Toplevel(win)
+            measure_win.title("단위변환")
+            measure_win.geometry("640x400+100+100")
+            measure_win.resizable(True, True)
+            measure_win.config(bg='#4499BB')
+            menu_pressed = True
+            return measure()
+        else:
+            measure_win.withdraw()
+            menu_pressed = False
+        
+    elif value == 'abs':
+        if oper != '':
+            absnum = eval(show.get().split(oper)[-1])
+            show.delete(show.get().index(oper)+1,END)
+            show.insert(END,-1*absnum)
+        elif oper == '':
+            absnum = eval(show.get())
+            show.delete(0,END)
+            show.insert (END,-1*absnum)
+
+
+def main_jegobs_btn_pressed(value):
+    global jegobPressed,jegobNum,mit,nJegob
+    global oper,operator
+    global light_mode,DM_gray,LM_light_gray,DM_white
+    if value == '=':
+        if oper in operator:
+            if nJegob == False:
+                mit = show.get()[show.get().index('√')+1:]
+                print(f'{mit}mit')
+            else:
+                mit = show.get()[show.get().index(oper):]
+                print(f'{mit}mit')
+        else:
+            mit = show.get()
+
+    elif jegobPressed == True:
+            if light_mode == False:
+                if nJegob == True:
+                    btn_sqr.config(bg=DM_gray,fg=DM_white)
+                elif nJegob == False:
+                    btn_sqrt.config(bg=DM_gray,fg=DM_white)
+
+            elif light_mode == True:
+                if nJegob == True:
+                    btn_sqr.config(bg=LM_light_gray,fg=DM_white)
+                elif nJegob == False:
+                    btn_sqrt.config(bg=LM_light_gray,fg=DM_white)
+       
+            jegobPressed = False
+    elif jegobPressed == False:
+        if value == '^':
+            nJegob = True
+            jegobPressed = True
+            if light_mode == True:
+                btn_sqr.config(bg=DM_gray,fg=DM_white)
+            elif light_mode == False:
+                btn_sqr.config(bg=LM_light_gray,fg=DM_white)
+            if oper != '':
+                mit = show.get()[show.get().index(oper)+1:]
+                print('222',mit)                
+            elif oper == '':
+                mit = show.get()
+                print('2222',mit)
+        
+        elif value == '^^':
+            if light_mode == True:
+                btn_sqrt.config(bg=DM_gray,fg=DM_white)
+            elif light_mode == False:
+                btn_sqrt.config(bg=LM_light_gray,fg=DM_white)
+            nJegob = False
+            show.insert(0,'√')#oper.index(),'√')
+            jegobPressed = True
+            mit = show.get()[show.get().index('√')+1:]
+            print(mit,'mmm')            
+        
+        # if oper != '' and nJegob == True:
+        #     mit = show.get()[show.get().index(oper)+1:]
+        #     print('222',mit)
+        # elif oper == '' and nJegob == True:
+        #     mit = show.get()
+        #     print('2222',mit)
+        # elif nJegob == False:
+        #     mit = show.get()[show.get().index('√')+1:]
+        #     print(mit,'mmm')
+    print('nJ,jP',nJegob,jegobPressed)
+
+
+def jegob_cal(value):
+    global run_time,mem_jisu,jisu,jegobNum
+    global sik,dap,oper,operator,equalPressed
+    if mem_jisu != 0:
+        jisu = mem_jisu
+        main_jegobs_btn_pressed('=')
+        show.delete(show.get().index(oper),END)
+#요 밑에꺼로 안드감
+    if value == 'jegob':  #제곱
+        sik = (f'밑:{mit},제곱:{jisu}')
+        dap = round(eval(mit)**eval(jisu),8)
+        print(['s'],sik,mit,jisu)
+
+        if oper in operator:
+            show.delete(show.get().index(oper)+1,END)
+        else:
+            show.delete(0,END)
+        show.insert(END,dap)
+        mem_jisu = jisu
+        print(sik,dap,':::')
+        return history_act('jegob')
+    elif value == 'bogej': #제곱근
+        print('제곱컬')
+        #if equalPressed == False:
+        print('재ㅔ곱컬2')
+        sik = (f'밑:{mit},제곱근:{jisu}')
+        print(['s'],sik,mit,jisu)
+        dap = round(eval(mit)**(1/eval(jisu)),8)   
+        print('dap1',dap)
+        #dap = eval(dap[:dap.index('.')+9])
+        print('dap2')
+        print(sik,dap,'::^:')
+        if oper in operator:
+            show.delete(show.get().index(oper)+1,END)
+        else:
+            show.delete(0,END)
+        show.insert(END,dap)
+        mem_jisu = jisu
+        print(sik,dap,':::')
+        return history_act('bogej')
+    
+
+
+def mode():
+    global light_mode
+
+    if light_mode:
+        light_mode=False
+        dark_and_light('darkness')    
+        
+    
+    else:
+        light_mode=True
+        dark_and_light('whiteness')
+        
+
+        # activebackground  active 상태일 때 버튼의 배경 색상
+
+def dark_and_light(value):
+    if value == 'whiteness':
+        button_darkmode.config(image=light,bg='white',activebackground='white')
+        frame3.config(bg=DM_light_gray)
+        show.config(bg=DM_light_gray,fg='#000000')
+        history.config(bg=DM_light_gray,fg='#000000')
+        style1.configure("Vertical.TScrollbar", troughcolor='#AEEEEE', background='#B4D0FF')
+        style2.configure("Horizontal.TScrollbar", troughcolor='#AEEEEE', background='#B4D0FF')
+
+        btn_menu.config(bg='#FFCCEA',fg='#9A10C0')
+
+        btn_equal.config(bg=LM_gray,fg=DM_black)
+        btn_minus.config(bg=LM_gray,fg=DM_black)
+        btn_plus.config(bg=LM_gray,fg=DM_black)
+        btn_div.config(bg=LM_gray,fg=DM_black)
+        btn_sqrt.config(bg=LM_light_gray,fg=DM_white) 
+
+        btn_sqr.config(bg=LM_light_gray,fg=DM_white)
+        btn_brk.config(bg=LM_white,fg=DM_black)
+
+        btn_clear.config(bg=LM_white,fg=DM_black)
+        btn_all_clear.config(bg=LM_white,fg=DM_black)
+        btn_0.config(bg=LM_white,fg=DM_black)
+        btn_1.config(bg=LM_white,fg=DM_black)
+        btn_2.config(bg=LM_white,fg=DM_black)
+        btn_3.config(bg=LM_white,fg=DM_black)
+        btn_4.config(bg=LM_white,fg=DM_black)
+        btn_5.config(bg=LM_white,fg=DM_black)
+        btn_6.config(bg=LM_white,fg=DM_black)
+        btn_7.config(bg=LM_white,fg=DM_black)
+        btn_8.config(bg=LM_white,fg=DM_black)
+        btn_9.config(bg=LM_white,fg=DM_black)
+        btn_abs.config(bg=LM_white,fg=DM_black)
+        btn_dot.config(bg=LM_white,fg=DM_black)
+        btn_mul.config(bg=LM_gray,fg=DM_black)
+    if value == 'darkness':
+        button_darkmode.config(image=dark,bg='#26242f',activebackground='#26242f')
+        frame3.config(bg='#26242f')
+        show.config(bg='#26242f',fg='#FFFF10')
+        history.config(bg='#26242f',fg='#FFFF10')
+        style1.configure("Vertical.TScrollbar", troughcolor='#110D17', background='#FF8C6E')
+        style2.configure("Horizontal.TScrollbar", troughcolor='#110D17', background='#FF8C6E') #background='#DD2757'
+
+        btn_menu.config(bg='#ABCDEF',fg='#0000A0')
+
+        btn_equal.config(bg=DM_yellow,fg=DM_white)
+        btn_minus.config(bg=DM_yellow,fg=DM_white)
+        btn_plus.config(bg=DM_yellow,fg=DM_white)
+        btn_div.config(bg=DM_yellow,fg=DM_white)
+        btn_sqrt.config(bg=DM_gray,fg=DM_white)
+
+        btn_sqr.config(bg=DM_gray,fg=DM_white)
+        btn_brk.config(bg=DM_dk_gray,fg=DM_white)
+
+        btn_clear.config(bg=DM_dk_gray,fg=DM_white)
+        btn_all_clear.config(bg=DM_dk_gray,fg=DM_white)
+        btn_0.config(bg=DM_dk_gray,fg=DM_white)
+        btn_1.config(bg=DM_dk_gray,fg=DM_white)
+        btn_2.config(bg=DM_dk_gray,fg=DM_white)
+        btn_3.config(bg=DM_dk_gray,fg=DM_white)
+        btn_4.config(bg=DM_dk_gray,fg=DM_white)
+        btn_5.config(bg=DM_dk_gray,fg=DM_white)
+        btn_6.config(bg=DM_dk_gray,fg=DM_white)
+        btn_7.config(bg=DM_dk_gray,fg=DM_white)
+        btn_8.config(bg=DM_dk_gray,fg=DM_white)
+        btn_9.config(bg=DM_dk_gray,fg=DM_white)
+        btn_abs.config(bg=DM_dk_gray,fg=DM_white)
+        btn_dot.config(bg=DM_dk_gray,fg=DM_white)
+        btn_mul.config(bg=DM_yellow,fg=DM_white) 
+        
+def easter_eggs(value):
+    global EasterEgg,m1_easter,m2_easter
+    EasterEgg = value
+    if value == '1':
+        show.delete(0,END)
+        show.insert(0,'YOU JUST ACTIVATED MY TRAP CARD')
+        history.config(fg='#FF0000',bg=DM_black,font='궁서 19')
+        show.config(fg='#FF0000',bg=DM_black)
+        history.delete(0,END)
+        history.insert(0,'YOU JUST')
+        history.insert(END,'ACTIVATED')
+        history.insert(END,'MY TRAP CARD')
+        history.insert(END,'')
+        history.insert(END,'DO YOU')
+        history.insert(END,'WANT TO CLEAR?')
+    elif value == 'M1':
+        print('Nyang')
+        show.config(image=NyangCat)
+
+def close_win():
+    if messagebox.askokcancel('종료', '정말 끄실건가요?'):
+        win.destroy()
+
+
+# 버튼 정의
+
+btn_1 = Button(frame2, text='1', command = lambda:btn_num_pressed('1'))    
+btn_2 = Button(frame2, text='2', command = lambda:btn_num_pressed('2'))
+btn_3 = Button(frame2, text='3', command = lambda:btn_num_pressed('3'))
+btn_4 = Button(frame2, text='4', command = lambda:btn_num_pressed('4'))
+btn_5 = Button(frame2, text='5', command = lambda:btn_num_pressed('5'))
+btn_6 = Button(frame2, text='6', command = lambda:btn_num_pressed('6'))
+btn_7 = Button(frame2, text='7', command = lambda:btn_num_pressed('7'))
+btn_8 = Button(frame2, text='8', command = lambda:btn_num_pressed('8'))
+btn_9 = Button(frame2, text='9', command = lambda:btn_num_pressed('9'))
+btn_0 = Button(frame2, text='0', width=2, command = lambda:btn_num_pressed('0'))
+
+btn_div = Button(frame2, text='÷',width=1, command = lambda:btn_operator_pressed('÷'))
+btn_plus = Button(frame2, text='+', command = lambda:btn_operator_pressed('+'))
+btn_minus = Button(frame2, text='-', command = lambda:btn_operator_pressed('-'))
+btn_mul = Button(frame2, text='x', command = lambda:btn_operator_pressed('x'))
+btn_dot = Button(frame2, text='.', command = lambda:btn_operator_pressed('.'))
+btn_equal = Button(frame2, text='=', command = lambda:[equal_btn_pressed('='),btn_operator_pressed('=')])
+btn_clear = Button(frame2, text='c', command = lambda:clear_btn_pressed('c'))
+btn_all_clear = Button(frame2, text='ac', width=1, command = lambda:clear_btn_pressed('ac'))
+
+btn_menu = Button(frame2, text='≡', width=1, command = lambda:menu_btn_pressed('M'))
+btn_sqr = Button(frame2, text='aⁿ', width=1, command = lambda:main_jegobs_btn_pressed('^'))
+btn_sqrt = Button(frame2, text='ⁿ√a', width=1, command = lambda:main_jegobs_btn_pressed('^^'))
+btn_abs = Button(frame2, text='+/-', width=1, command = lambda:menu_btn_pressed('abs'))
+btn_brk = Button(frame2, text='()', width=1, command = lambda:btn_brk_pressed('brk'))
+
+button_darkmode = Button(frame3,image=light,bd=0,bg='white',activebackground='white',command=mode,borderwidth=0, highlightthickness=0)
+
+# 버튼 배치
+
+#entry_value = StringVar(, value='')
+
+#history.grid(row = 0,column=5,rowspan=7,sticky=N+S)
+
+btn_1.grid(row=5,column=1)
+btn_2.grid(row=5,column=2,sticky=W+E+N+S)
+btn_3.grid(row=5,column=3)
+btn_4.grid(row=4,column=1)
+btn_5.grid(row=4,column=2,sticky=W+E+N+S)
+btn_6.grid(row=4,column=3)
+btn_7.grid(row=3,column=1)
+btn_8.grid(row=3,column=2,sticky=W+E+N+S)
+btn_9.grid(row=3,column=3)
+btn_0.grid(row=6,column=2)
+
+
+btn_clear.grid(row=2,column=1,sticky=W+E+N+S)
+btn_div.grid(row=2,column=4,sticky=W+E+N+S)
+btn_mul.grid(row=1,column=4,sticky=W+E+N+S) 
+btn_minus.grid(row=4,column=4,sticky=W+E+N+S)
+btn_plus.grid(row=3,column=4,sticky=W+E+N+S)
+btn_equal.grid(row=5,column=4,rowspan=3,sticky=W+E+N+S)
+btn_dot.grid(row=6,column=3,sticky=W+E+N+S)
+btn_all_clear.grid(row=2,column=2,sticky=W+E+N+S)
+
+btn_menu.grid(row=1,column=1,sticky=W+E+N+S)
+btn_sqr.grid(row=1,column=2,sticky=W+E+N+S) 
+btn_sqrt.grid(row=1,column=3,sticky=W+E+N+S) 
+btn_abs.grid(row=6,column=1,sticky=W+E)
+btn_brk.grid(row=2,column=3,sticky=W+E+N+S) 
+
+button_darkmode.pack(anchor='e')
+
+
+
+#색상
+DM_white = '#FFFFFF'
+DM_black = '#000000'
+DM_yellow = '#F6A933'
+DM_dk_gray = '#404040'
+DM_light_gray = '#FAFAFA'
+DM_gray ='#808080'
+LM_gray = '#555A6D'
+LM_light_gray = '#6B7792'
+LM_white = '#B4D0FF'
+BOTH_red = 'red'
+
+
+
+history.config() #anchor추가
+history.config(bg='#FAFAFA',fg=DM_dk_gray)
+
+#라이트모드(초기설정)
+btn_menu.config(bg='#FFCCEA',fg='#9A10C0')
+
+btn_equal.config(bg=LM_gray,fg=DM_black)
+btn_minus.config(bg=LM_gray,fg=DM_black)
+btn_plus.config(bg=LM_gray,fg=DM_black)
+btn_div.config(bg=LM_gray,fg=DM_black)
+btn_sqrt.config(bg=LM_light_gray,fg=DM_white)
+btn_mul.config(bg=LM_gray,fg=DM_black)
+
+btn_sqr.config(bg=LM_light_gray,fg=DM_white)
+btn_brk.config(bg=LM_white,fg=DM_black)
+
+btn_clear.config(bg=LM_white,fg=DM_black)
+btn_all_clear.config(bg=LM_white,fg=DM_black)
+btn_0.config(bg=LM_white,fg=DM_black)
+btn_1.config(bg=LM_white,fg=DM_black)
+btn_2.config(bg=LM_white,fg=DM_black)
+btn_3.config(bg=LM_white,fg=DM_black)
+btn_4.config(bg=LM_white,fg=DM_black)
+btn_5.config(bg=LM_white,fg=DM_black)
+btn_6.config(bg=LM_white,fg=DM_black)
+btn_7.config(bg=LM_white,fg=DM_black)
+btn_8.config(bg=LM_white,fg=DM_black)
+btn_9.config(bg=LM_white,fg=DM_black)
+btn_abs.config(bg=LM_white,fg=DM_black)
+btn_dot.config(bg=LM_white,fg=DM_black)
+
+#단위변환
+
+def close():
+    global menu_pressed
+    measure_win.withdraw()
+    menu_pressed = False
+def measure():
+    measure_win.iconbitmap(r'ruler.ico')
+    print('measure')
+    measure_win.protocol("WM_DELETE_WINDOW", close)
+    left_entry = tkinter.Entry(measure_win,width=10,bg='#FAFAFA',fg='#000000',borderwidth=1,font='맑은고딕 20')
+    right_entry = tkinter.Entry(measure_win,width=10,bg='#FAFAFA',fg='#000000',borderwidth=1,font='맑은고딕 20')
+    
+    left_entry.grid(row=13,column=6)
+    right_entry.grid(row=13,column=16)
+    
+    trash1 = tkinter.Button(measure_win,width=10,borderwidth=0,font='맑은고딕 20',bg='#4499BB',command=lambda:m_easters('m1'))
+    trash2 = tkinter.Button(measure_win,width=10,borderwidth=0,font='맑은고딕 20',bg='#4499BB',command=lambda:m_easters('m2'))
+
+
+    trash1.grid(row=0,column=0)
+    trash2.grid(row=1,column=0)
+
+    
+    combobox=tkinter.ttk.Combobox(measure_win, height=15, values=values,width=4,font='맑은고딕 20')
+    combobox.grid(row=12,column=6,columnspan=20,sticky='we')
+    
+    unit1=tkinter.ttk.Combobox(measure_win, height=15, values='',width=4,font='맑은고딕 20')
+    unit1.grid(row=14,column=6,columnspan=4,sticky='we')
+    unit1.config()
+    
+    unit2=tkinter.ttk.Combobox(measure_win, height=15, values='',width=4,font='맑은고딕 20')
+    unit2.grid(row=14,column=16,sticky='we')
+    
+
+
+    def m_easters(value):
+        global m1_easter,m2_easter
+        if m1_easter + m2_easter == 6:
+            print('MMM',m1_easter,m2_easter)
+            trash1.config(image=NyangCat)
+        elif value =='m1':
+            m1_easter += 4
+            print('m1',m1_easter)
+        elif value == 'm2':
+            print('m2',m2_easter)
+            m2_easter -= 1
+
+    def L_cal(event):
+        try:
+            global Lselect,Rselect,a,length_unit,weight_unit,Len,r_e_value,Cbox,direc
+            direc = 'left'
+            a = combobox.get()
+            print('a:',a)
+            if a == '길이':
+                Lselect = unit1.get()
+                Rselect = unit2.get()
+                rate_value = float(length_unit[Lselect]/length_unit[Rselect])
+        
+                if Len > len(left_entry.get()) and len(left_entry.get()) == 0: #지웠을때
+                    right_entry.delete(0,END)
+                else:
+                    converted = float(left_entry.get())
+                    right_entry.delete(0,END)
+                    right_entry.insert(END,round(converted*rate_value,8))
+                print(f'L,R,rate {Lselect}/{Rselect}/{rate_value}')
+            elif a == '질량':
+                Lselect = unit1.get()
+                Rselect = unit2.get()
+                rate_value = float(weight_unit[Lselect]/weight_unit[Rselect])
+        
+                if Len > len(left_entry.get()) and len(left_entry.get()) == 0: #지웠을때
+                    right_entry.delete(0,END)
+                else:
+                    converted = float(left_entry.get())
+                    right_entry.delete(0,END)
+                    right_entry.insert(END,round(converted*rate_value,8))
+                print(f'L,R,rate {Lselect}/{Rselect}/{rate_value}')
+
+            elif a != '길이' or a != '질량': #and [s for s in left_entry.get() if zero_to_nine] == left_entry.get():
+                combobox.delete(0,END)
+                combobox.insert(0,Cbox)
+            Len = len(left_entry.get())
+        except ValueError:
+            if left_entry.get() != '':
+                Cbox = combobox.get()
+                combobox.delete(0,END)
+                combobox.insert(0,'숫자를 입력해주세요')
+        except KeyError:
+            if a == '길이':
+                Cbox = combobox.get()
+                combobox.delete(0,END)
+                combobox.insert(0,'길이를 선택해주세요')
+            elif a == '질량':
+                Cbox = combobox.get()
+                combobox.delete(0,END)
+                combobox.insert(0,'질량을 선택해주세요')                     
+    def R_cal(event):
+        try:
+            global Lselect,Rselect,a,length_unit,weight_unit,Len,r_e_value,Cbox,direc
+            direc = 'right'
+            a = combobox.get()
+            print('a:',a)     
+            if a == '길이':
+                Rselect = unit1.get()
+                Lselect = unit2.get()
+                rate_value = float(length_unit[Lselect]/length_unit[Rselect])
+        
+                if Len > len(right_entry.get()) and len(right_entry.get()) == 0: #지웠을때
+                    left_entry.delete(0,END)
+                else:
+                    converted = float(right_entry.get())
+                    left_entry.delete(0,END)
+                    left_entry.insert(END,round(converted*rate_value,8))
+                print(f'L,R,rate {Lselect}/{Rselect}/{rate_value}')
+            elif a == '질량':
+                Rselect = unit1.get()
+                Lselect = unit2.get()
+                rate_value = float(weight_unit[Lselect]/weight_unit[Rselect])
+        
+                if Len > len(right_entry.get()) and len(right_entry.get()) == 0: #지웠을때
+                    left_entry.delete(0,END)
+                else:
+                    converted = float(right_entry.get())
+                    left_entry.delete(0,END)
+                    left_entry.insert(END,round(converted*rate_value,8))
+                print(f'L,R,rate {Lselect}/{Rselect}/{rate_value}')
+
+            elif a != '길이' or a != '질량': #and [s for s in left_entry.get() if zero_to_nine] == left_entry.get():
+                combobox.delete(0,END)
+                combobox.insert(0,Cbox)
+            Len = len(right_entry.get())
+        except ValueError:
+            if right_entry.get() != '':
+                Cbox = combobox.get()
+                combobox.delete(0,END)
+                combobox.insert(0,'숫자를 입력해주세요')
+        except KeyError:
+            if a == '길이':
+                Cbox = combobox.get()
+                combobox.delete(0,END)
+                combobox.insert(0,'길이를 선택해주세요')
+            elif a == '질량':
+                Cbox = combobox.get()
+                combobox.delete(0,END)
+                combobox.insert(0,'질량을 선택해주세요')  
+
+
+    def mokrok_sel(value):
+        global select,length,weight
+        a = combobox.get()
+        print(a)
+        if a == '길이':
+            unit1.config(values=length)
+            unit2.config(values=length)
+            unit1.delete(0,'end')
+            unit1.insert(0,'길이선택')
+            unit2.delete(0,'end')
+            unit2.insert(0,'길이선택')
+    
+        elif a == '질량':
+            unit1.config(values=weight)
+            unit2.config(values=weight)
+            unit1.delete(0,END)
+            unit1.insert(0,'질량선택')
+            unit2.delete(0,END)
+            unit2.insert(0,'질량선택')
+        else:
+            pass
+
+    def unit_change(event):
+        global direc
+        print('testtt')
+        if direc == 'left':
+            print('L')
+            L_cal('left')
+        elif direc == 'right':
+            print('R')
+            R_cal('right')
+    
+    combobox.bind('<<ComboboxSelected>>',mokrok_sel)
+    left_entry.bind("<KeyRelease>",L_cal)
+    right_entry.bind("<KeyRelease>",R_cal)
+    unit1.bind("<<ComboboxSelected>>",unit_change)
+    unit2.bind("<<ComboboxSelected>>",unit_change)
+    
+    combobox.set("목록 선택")
+    unit1.set("단위")
+    unit2.set("단위")
+
+win.protocol("WM_DELETE_WINDOW", close_win)
+win.mainloop()
