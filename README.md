@@ -1,5 +1,5 @@
 - 👋 Hi, I’m @doremamo
-- 👀 I’m interested in python and C
+- 👀 I’m interested in Python and C
 - 🌱 I’m currently learning C
 - 📫 How to reach me : kimdohum18@gmail.com
 
