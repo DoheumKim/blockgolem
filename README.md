@@ -1,4 +1,4 @@
-- 👋 Hi, I’m @doremamo
+- 👋 Hi, I’m @Doheum Kim
 - 👀 I’m interested in Python, C and R
 - 🌱 I’m currently learning R
 - 📫 How to reach me : kimdohum18@gmail.com
